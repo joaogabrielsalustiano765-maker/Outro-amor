@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moreeuw — Um retrato</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400;1,600&family=Jost:wght@200;300;400;500&family=Italiana&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ivory:#F7F0E8;
+  --cream:#EDE3D6;
+  --sand:#D9C9B5;
+  --blush:#E8C4C4;
+  --rose:#C4828A;
+  --mauve:#8B4A5C;
+  --wine:#5C2D3A;
+  --warm-black:#1A1210;
+  --warm-gray:#8A7B72;
+  --gold:#C4A882;
+}
+html{scroll-behavior:smooth;scroll-snap-type:none}
+body{
+  background:var(--ivory);
+  color:var(--warm-black);
+  font-family:'Jost',sans-serif;
+  overflow-x:hidden;
+  cursor:none;
+}
+
+/* GRAIN */
+body::before{
+  content:'';position:fixed;inset:0;z-index:9000;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity:0.35;mix-blend-mode:multiply;
+}
+
+/* CURSOR */
+#cur{position:fixed;z-index:9999;pointer-events:none;
+  width:8px;height:8px;border-radius:50%;background:var(--mauve);
+  transform:translate(-50%,-50%);transition:transform 0.08s}
+#cur-r{position:fixed;z-index:9998;pointer-events:none;
+  width:32px;height:32px;border-radius:50%;
+  border:1px solid rgba(139,74,92,0.4);
+  transform:translate(-50%,-50%);transition:width .3s,height .3s,border-color .3s}
+
+/* SETUP SCREEN */
+#setup{
+  position:fixed;inset:0;z-index:8000;
+  background:var(--ivory);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 24px;
+  transition:opacity 0.8s ease, transform 0.8s ease;
+}
+.setup-title{
+  font-family:'Italiana',serif;
+  font-size:clamp(36px,6vw,72px);
+  color:var(--warm-black);
+  text-align:center;margin-bottom:8px;
+}
+.setup-sub{
+  font-size:12px;letter-spacing:0.35em;text-transform:uppercase;
+  color:var(--warm-gray);margin-bottom:56px;
+  font-weight:300;
+}
+.setup-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;max-width:680px;width:100%;
+  margin-bottom:40px;
+}
+@media(max-width:600px){.setup-grid{grid-template-columns:repeat(2,1fr)}}
+.photo-slot{
+  aspect-ratio:3/4;border-radius:16px;
+  border:1.5px dashed var(--sand);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:10px;cursor:pointer;
+  background:var(--cream);
+  transition:all 0.3s ease;
+  position:relative;overflow:hidden;
+  font-size:11px;letter-spacing:0.25em;text-transform:uppercase;
+  color:var(--warm-gray);font-weight:300;
+}
+.photo-slot:hover{
+  border-color:var(--rose);
+  background:rgba(232,196,196,0.15);
+}
+.photo-slot.has-photo{
+  border-style:solid;border-color:var(--sand);
+}
+.photo-slot img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;border-radius:14px;
+}
+.slot-icon{font-size:24px;opacity:0.4}
+.slot-label{opacity:0.6}
+.slot-num{
+  position:absolute;top:10px;left:12px;
+  font-size:9px;letter-spacing:0.3em;
+  color:var(--warm-gray);z-index:1;
+  background:rgba(247,240,232,0.85);
+  padding:2px 8px;border-radius:100px;
+}
+.slot-check{
+  position:absolute;top:10px;right:10px;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--mauve);color:white;
+  display:none;align-items:center;justify-content:center;
+  font-size:10px;z-index:2;
+}
+.photo-slot.has-photo .slot-check{display:flex}
+.photo-slot.has-photo .slot-icon,
+.photo-slot.has-photo .slot-label{display:none}
+.setup-hint{
+  font-size:11px;color:var(--warm-gray);
+  text-align:center;letter-spacing:0.1em;
+  line-height:1.8;margin-bottom:32px;
+}
+.setup-btn{
+  padding:16px 48px;border-radius:100px;
+  background:var(--warm-black);color:var(--ivory);
+  font-family:'Jost',sans-serif;font-size:12px;
+  letter-spacing:0.3em;text-transform:uppercase;
+  border:none;cursor:pointer;
+  transition:all 0.3s ease;
+  font-weight:400;
+}
+.setup-btn:hover{background:var(--mauve);transform:translateY(-2px)}
+.setup-btn:disabled{opacity:0.4;pointer-events:none}
+.setup-skip{
+  margin-top:16px;font-size:11px;color:var(--sand);
+  cursor:pointer;letter-spacing:0.15em;text-decoration:underline;
+  background:none;border:none;font-family:'Jost',sans-serif;
+}
+.setup-skip:hover{color:var(--warm-gray)}
+input[type=file]{display:none}
+
+/* MAIN */
+#main{opacity:0;pointer-events:none;transition:opacity 1s ease}
+#main.active{opacity:1;pointer-events:all}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:24px 48px;
+  display:flex;align-items:center;justify-content:space-between;
+  mix-blend-mode:multiply;
+}
+@media(max-width:600px){nav{padding:20px 20px}}
+.nav-l{
+  font-family:'EB Garamond',serif;font-size:15px;font-style:italic;
+  color:var(--warm-black);letter-spacing:0.1em;
+}
+.nav-r{
+  font-size:9px;letter-spacing:0.4em;text-transform:uppercase;
+  color:var(--warm-gray);font-weight:300;
+}
+
+/* HERO */
+#hero{
+  min-height:100vh;display:grid;
+  grid-template-columns:1fr 1fr;
+  position:relative;overflow:hidden;
+}
+@media(max-width:768px){#hero{grid-template-columns:1fr;min-height:auto}}
+.hero-left{
+  padding:120px 48px 80px;
+  display:flex;flex-direction:column;
+  justify-content:flex-end;
+  position:relative;z-index:1;
+}
+@media(max-width:768px){.hero-left{padding:120px 24px 40px;order:2}}
+.hero-eyebrow{
+  font-size:9px;letter-spacing:0.5em;text-transform:uppercase;
+  color:var(--warm-gray);margin-bottom:24px;
+  opacity:0;transform:translateY(15px);
+  font-weight:300;
+}
+.hero-title{
+  font-family:'Italiana',serif;
+  font-size:clamp(56px,8vw,110px);
+  line-height:0.95;color:var(--warm-black);
+  margin-bottom:32px;
+  opacity:0;transform:translateY(25px);
+}
+.hero-title span{
+  display:block;color:var(--mauve);
+}
+.hero-desc{
+  font-family:'EB Garamond',serif;
+  font-size:clamp(17px,1.8vw,21px);font-weight:400;
+  font-style:italic;line-height:1.8;
+  color:var(--warm-gray);max-width:380px;
+  margin-bottom:48px;
+  opacity:0;transform:translateY(15px);
+}
+.hero-tag-row{
+  display:flex;gap:10px;flex-wrap:wrap;
+  opacity:0;
+}
+.tag{
+  padding:8px 18px;border-radius:100px;
+  border:1px solid var(--sand);
+  font-size:10px;letter-spacing:0.25em;text-transform:uppercase;
+  color:var(--warm-gray);font-weight:300;
+  background:rgba(255,255,255,0.5);
+  backdrop-filter:blur(4px);
+}
+
+.hero-right{
+  position:relative;overflow:hidden;
+  background:var(--cream);
+}
+@media(max-width:768px){.hero-right{height:55vw;min-height:300px;order:1}}
+.hero-photo{
+  position:absolute;inset:0;
+  background:var(--cream);
+  display:flex;align-items:center;justify-content:center;
+}
+.hero-photo img{width:100%;height:100%;object-fit:cover}
+.hero-photo-placeholder{
+  text-align:center;
+  font-family:'EB Garamond',serif;font-style:italic;
+  font-size:20px;color:var(--sand);
+}
+.hero-photo-placeholder small{
+  display:block;font-style:normal;font-family:'Jost',sans-serif;
+  font-size:9px;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--sand);margin-top:8px;
+}
+.hero-overlay{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:48px 40px 32px;
+  background:linear-gradient(to top,rgba(247,240,232,0.9),transparent);
+  z-index:1;
+}
+.hero-overlay-num{
+  font-family:'Italiana',serif;font-size:120px;
+  color:rgba(139,74,92,0.08);
+  position:absolute;bottom:-20px;right:20px;
+  line-height:1;pointer-events:none;user-select:none;
+}
+.hero-scroll-hint{
+  position:absolute;bottom:32px;left:48px;z-index:2;
+  display:flex;align-items:center;gap:12px;
+  font-size:9px;letter-spacing:0.4em;text-transform:uppercase;
+  color:var(--warm-gray);opacity:0;
+}
+@media(max-width:768px){.hero-scroll-hint{display:none}}
+.scroll-line-h{
+  width:48px;height:1px;
+  background:linear-gradient(90deg,var(--warm-gray),transparent);
+}
+
+/* SECTIONS */
+section{position:relative;z-index:1}
+
+/* EDITORIAL ROW */
+.ed-row{
+  display:grid;gap:0;
+  position:relative;
+}
+.ed-2col{grid-template-columns:1fr 1fr}
+.ed-3col{grid-template-columns:2fr 1fr}
+.ed-3col-r{grid-template-columns:1fr 2fr}
+@media(max-width:768px){
+  .ed-2col,.ed-3col,.ed-3col-r{grid-template-columns:1fr}
+}
+
+/* PHOTO PANEL */
+.photo-panel{
+  position:relative;overflow:hidden;
+  background:var(--cream);
+}
+.photo-panel img{
+  width:100%;height:100%;object-fit:cover;
+  display:block;
+  transition:transform 6s ease;
+}
+.photo-panel:hover img{transform:scale(1.03)}
+.photo-panel.tall{min-height:70vh}
+.photo-panel.half{min-height:50vh}
+.photo-panel.sq{aspect-ratio:1}
+.photo-placeholder{
+  width:100%;height:100%;min-height:400px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--cream);
+  font-family:'EB Garamond',serif;font-style:italic;
+  font-size:18px;color:var(--sand);flex-direction:column;gap:8px;
+}
+.photo-placeholder small{
+  font-style:normal;font-family:'Jost',sans-serif;
+  font-size:9px;letter-spacing:0.3em;text-transform:uppercase;
+}
+
+/* TEXT PANEL */
+.text-panel{
+  padding:clamp(40px,6vw,80px) clamp(32px,5vw,72px);
+  display:flex;flex-direction:column;justify-content:center;
+  background:var(--ivory);
+}
+.text-panel.dark{background:var(--warm-black);color:var(--ivory)}
+.text-panel.cream{background:var(--cream)}
+.text-panel.wine{background:var(--wine);color:var(--ivory)}
+
+.ed-label{
+  font-size:9px;letter-spacing:0.45em;text-transform:uppercase;
+  color:var(--warm-gray);margin-bottom:20px;font-weight:300;
+  opacity:0;transform:translateY(12px);
+}
+.text-panel.dark .ed-label{color:rgba(255,255,255,0.35)}
+.text-panel.wine .ed-label{color:rgba(232,196,196,0.6)}
+.ed-title{
+  font-family:'Italiana',serif;
+  font-size:clamp(34px,4.5vw,62px);
+  line-height:1.1;margin-bottom:24px;
+  opacity:0;transform:translateY(20px);
+}
+.ed-title em{font-family:'EB Garamond',serif;font-style:italic;color:var(--rose)}
+.text-panel.dark .ed-title em{color:var(--blush)}
+.text-panel.wine .ed-title em{color:var(--blush)}
+.ed-body{
+  font-family:'EB Garamond',serif;font-size:clamp(17px,1.6vw,20px);
+  font-weight:400;line-height:1.9;color:var(--warm-gray);
+  max-width:440px;opacity:0;transform:translateY(15px);
+}
+.text-panel.dark .ed-body{color:rgba(255,255,255,0.5)}
+.text-panel.wine .ed-body{color:rgba(232,196,196,0.7)}
+.ed-quote{
+  font-family:'Italiana',serif;
+  font-size:clamp(22px,3vw,38px);line-height:1.4;
+  color:var(--warm-black);opacity:0;transform:translateY(20px);
+  position:relative;padding-left:24px;
+}
+.ed-quote::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:2px;background:var(--rose);border-radius:2px;
+}
+.text-panel.dark .ed-quote{color:var(--ivory)}
+.text-panel.wine .ed-quote{color:var(--ivory)}
+
+/* FULL WIDTH QUOTE */
+.full-quote{
+  padding:clamp(80px,10vw,140px) clamp(32px,8vw,120px);
+  text-align:center;background:var(--cream);
+  position:relative;overflow:hidden;
+}
+.full-quote-bg{
+  position:absolute;inset:0;
+  font-family:'Italiana',serif;font-size:clamp(80px,15vw,200px);
+  color:rgba(196,130,138,0.06);
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;user-select:none;line-height:1;
+}
+.fq-text{
+  font-family:'Italiana',serif;
+  font-size:clamp(28px,4.5vw,60px);
+  line-height:1.4;color:var(--warm-black);
+  max-width:900px;margin:0 auto;
+  position:relative;z-index:1;
+  opacity:0;transform:translateY(25px);
+}
+.fq-text em{color:var(--mauve);font-family:'EB Garamond',serif;font-style:italic}
+.fq-attr{
+  margin-top:32px;font-size:10px;letter-spacing:0.35em;
+  text-transform:uppercase;color:var(--warm-gray);
+  position:relative;z-index:1;opacity:0;
+}
+
+/* TRIPLE PANEL */
+.triple-row{display:grid;grid-template-columns:repeat(3,1fr)}
+@media(max-width:768px){.triple-row{grid-template-columns:1fr}}
+.triple-card{
+  padding:clamp(36px,4vw,56px) clamp(28px,3.5vw,44px);
+  border-right:1px solid var(--cream);
+  display:flex;flex-direction:column;
+  gap:16px;background:var(--ivory);
+}
+.triple-card:last-child{border-right:none}
+.tc-num{
+  font-family:'Italiana',serif;font-size:72px;
+  color:rgba(196,130,138,0.15);line-height:1;
+  opacity:0;transform:translateY(20px);
+}
+.tc-title{
+  font-family:'Italiana',serif;font-size:clamp(24px,2.5vw,32px);
+  color:var(--warm-black);
+  opacity:0;transform:translateY(15px);
+}
+.tc-body{
+  font-family:'EB Garamond',serif;font-size:clamp(15px,1.4vw,18px);
+  font-style:italic;line-height:1.8;color:var(--warm-gray);
+  opacity:0;transform:translateY(12px);
+}
+
+/* TIMELINE STRIP */
+.tl-strip{
+  padding:clamp(60px,8vw,120px) clamp(32px,6vw,80px);
+  background:var(--warm-black);color:var(--ivory);
+}
+.tl-header{margin-bottom:64px}
+.tl-header .ed-label{color:rgba(255,255,255,0.3)}
+.tl-header .ed-title{color:var(--ivory)}
+.tl-rows{display:flex;flex-direction:column;gap:0}
+.tl-row{
+  display:grid;grid-template-columns:100px 1px 1fr;
+  gap:0 32px;padding:32px 0;
+  border-top:1px solid rgba(255,255,255,0.07);
+  opacity:0;transform:translateX(-20px);
+}
+@media(max-width:600px){
+  .tl-row{grid-template-columns:60px 1px 1fr;gap:0 20px}
+}
+.tl-year{
+  font-family:'Italiana',serif;font-size:40px;color:rgba(255,255,255,0.12);
+  align-self:start;padding-top:4px;
+  font-weight:400;
+}
+.tl-sep{background:rgba(255,255,255,0.1);align-self:stretch}
+.tl-content{padding-left:0}
+.tl-phase{
+  font-size:9px;letter-spacing:0.4em;text-transform:uppercase;
+  color:var(--rose);margin-bottom:10px;font-weight:300;
+}
+.tl-ctitle{
+  font-family:'Italiana',serif;font-size:clamp(22px,2.5vw,30px);
+  margin-bottom:12px;color:var(--ivory);
+}
+.tl-ctext{
+  font-family:'EB Garamond',serif;font-size:clamp(15px,1.5vw,18px);
+  font-style:italic;line-height:1.8;color:rgba(255,255,255,0.45);
+}
+.tl-ctext strong{color:rgba(232,196,196,0.8);font-style:normal;font-weight:400}
+
+/* PHOTO MOSAIC */
+.mosaic{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  grid-template-rows:auto auto;
+  gap:4px;background:var(--warm-black);
+  padding:4px;
+}
+@media(max-width:600px){.mosaic{grid-template-columns:1fr 1fr}}
+.mosaic-item{
+  overflow:hidden;
+  background:var(--cream);
+  position:relative;
+}
+.mosaic-item.span2{grid-column:span 2}
+.mosaic-item img{width:100%;height:100%;object-fit:cover;display:block;min-height:200px}
+.mosaic-caption{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:32px 20px 16px;
+  background:linear-gradient(to top,rgba(26,18,16,0.7),transparent);
+  font-family:'EB Garamond',serif;font-size:13px;font-style:italic;
+  color:rgba(255,255,255,0.7);
+}
+
+/* FINALE */
+#finale{
+  min-height:100vh;
+  display:grid;grid-template-columns:1fr 1fr;
+  position:relative;overflow:hidden;
+}
+@media(max-width:768px){#finale{grid-template-columns:1fr}}
+.finale-photo{
+  background:var(--cream);position:relative;overflow:hidden;
+}
+.finale-photo img{width:100%;height:100%;object-fit:cover}
+.finale-content{
+  background:var(--warm-black);color:var(--ivory);
+  padding:clamp(60px,8vw,120px) clamp(32px,5vw,72px);
+  display:flex;flex-direction:column;
+  justify-content:center;
+}
+@media(max-width:768px){.finale-photo{min-height:60vw}.finale-content{padding:56px 28px}}
+.finale-pre{
+  font-size:9px;letter-spacing:0.5em;text-transform:uppercase;
+  color:rgba(255,255,255,0.3);margin-bottom:40px;
+  opacity:0;transform:translateY(12px);
+}
+.finale-main{
+  font-family:'Italiana',serif;
+  font-size:clamp(28px,4vw,54px);
+  line-height:1.3;margin-bottom:40px;color:var(--ivory);
+  opacity:0;transform:translateY(25px);
+}
+.finale-typewriter{
+  font-family:'EB Garamond',serif;font-size:clamp(16px,1.6vw,20px);
+  font-style:italic;line-height:1.9;
+  color:rgba(255,255,255,0.45);
+  margin-bottom:56px;min-height:6em;
+  opacity:0;
+}
+.tw-cursor{display:inline-block;width:1.5px;height:1em;background:var(--rose);vertical-align:middle;margin-left:2px;animation:blink 1s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.finale-sig-row{
+  display:flex;align-items:center;gap:16px;opacity:0;transform:translateY(15px);
+}
+.sig-line{flex:1;height:1px;background:rgba(255,255,255,0.1)}
+.finale-sig{
+  font-family:'EB Garamond',serif;font-size:20px;font-style:italic;
+  color:rgba(255,255,255,0.4);
+}
+.finale-heart{
+  color:var(--rose);font-size:18px;
+  animation:hb 1.5s infinite;display:inline-block;
+}
+@keyframes hb{0%,100%{transform:scale(1)}30%{transform:scale(1.2)}60%{transform:scale(1)}}
+
+/* FOOTER */
+footer{
+  background:var(--warm-black);padding:24px 48px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid rgba(255,255,255,0.06);
+}
+.ft-l{font-family:'Italiana',serif;font-size:18px;color:rgba(255,255,255,0.2)}
+.ft-r{font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:rgba(255,255,255,0.15)}
+
+/* UTILS */
+.reveal{opacity:0;transform:translateY(25px)}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-r"></div>
+
+<!-- SETUP -->
+<div id="setup">
+  <div class="setup-title">Moreeuw</div>
+  <div class="setup-sub">Adicione as fotos dela</div>
+
+  <div class="setup-grid" id="slots-grid">
+    <!-- slots gerados por JS -->
+  </div>
+
+  <p class="setup-hint">
+    Clique em cada moldura para escolher uma foto.<br>
+    Você pode adicionar de 1 a 6 fotos — o layout se adapta automaticamente.
+  </p>
+  <button class="setup-btn" id="start-btn">Criar o site dela →</button>
+  <button class="setup-skip" id="skip-btn">entrar sem fotos</button>
+  <input type="file" id="file-input" accept="image/*">
+</div>
+
+<!-- MAIN SITE -->
+<div id="main">
+  <nav>
+    <span class="nav-l">Maria Eduarda Moreeuw</span>
+    <span class="nav-r">Um retrato</span>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Dedicado a ela</div>
+      <h1 class="hero-title">
+        <span>Moreeuw.</span>
+      </h1>
+      <p class="hero-desc">
+        Tem 16 anos. Já salva vidas.<br>
+        E ainda assim tem tempo de fazer o mundo mais delicado.
+      </p>
+      <div class="hero-tag-row">
+        <span class="tag">Socorrista</span>
+        <span class="tag">Futura enfermeira</span>
+        <span class="tag">Hello Kitty</span>
+        <span class="tag">Olhar marcante</span>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="hero-photo" id="hero-photo">
+        <div class="hero-photo-placeholder" id="hero-placeholder">
+          <span>foto 01</span>
+          <small>retrato principal</small>
+        </div>
+      </div>
+      <div class="hero-overlay-num">01</div>
+    </div>
+
+    <div class="hero-scroll-hint">
+      <div class="scroll-line-h"></div>
+      <span>rolar</span>
+    </div>
+  </section>
+
+  <!-- ROW 1: text + photo -->
+  <div class="ed-row ed-3col-r">
+    <div class="text-panel dark">
+      <div class="ed-label">Quem ela é</div>
+      <h2 class="ed-title">Delicada.<br>Mas <em>incrivelmente</em><br>forte.</h2>
+      <p class="ed-body">
+        Existe um tipo de pessoa que cuida do outro de um jeito que parece dom. 
+        Ela é esse tipo. Com 16 anos já escolheu a vida mais difícil — 
+        a de estar presente quando o outro mais precisa.
+      </p>
+    </div>
+    <div class="photo-panel tall" id="panel-1">
+      <div class="photo-placeholder"><span>foto 02</span><small>vertical</small></div>
+    </div>
+  </div>
+
+  <!-- FULL QUOTE 1 -->
+  <div class="full-quote">
+    <div class="full-quote-bg">♡</div>
+    <p class="fq-text">
+      "Ela cuida das pessoas <em>antes mesmo de crescer.</em><br>
+      Imagina quando ela for enfermeira de verdade."
+    </p>
+    <div class="fq-attr">— com admiração genuína</div>
+  </div>
+
+  <!-- ROW 2: photo + photo -->
+  <div class="ed-row ed-2col">
+    <div class="photo-panel tall" id="panel-2">
+      <div class="photo-placeholder"><span>foto 03</span><small>vertical</small></div>
+      <div class="mosaic-caption">Loira. Olhar marcante. Impossível de ignorar.</div>
+    </div>
+    <div class="text-panel cream">
+      <div class="ed-label">Sobre ela</div>
+      <p class="ed-quote">
+        "Tem um olhar que a gente não consegue descrever direito. 
+        Só consegue sentir."
+      </p>
+      <br>
+      <p class="ed-body" style="margin-top:24px">
+        Cabelos loiros, sorriso que desarma qualquer um, 
+        e um jeito de ser que mistura doçura e determinação 
+        de um jeito que não costuma caber numa pessoa só.
+      </p>
+    </div>
+  </div>
+
+  <!-- TRIPLE -->
+  <div class="triple-row">
+    <div class="triple-card">
+      <div class="tc-num">01</div>
+      <div class="tc-title">Carinhosa</div>
+      <p class="tc-body">Ela cuida de um jeito instintivo. Natural. Como se amar fosse a língua que ela mais domina.</p>
+    </div>
+    <div class="triple-card">
+      <div class="tc-num">02</div>
+      <div class="tc-title">Determinada</div>
+      <p class="tc-body">Socorrista aos 16. Futura enfermeira. Enquanto a maioria ainda procura propósito, ela já age pelo dela.</p>
+    </div>
+    <div class="triple-card">
+      <div class="tc-num">03</div>
+      <div class="tc-title">Inspiradora</div>
+      <p class="tc-body">Sem perceber, ela move as pessoas. O jeito que ela existe — com cuidado e presença — faz querer ser mais.</p>
+    </div>
+  </div>
+
+  <!-- PHOTO MOSAIC -->
+  <div class="mosaic" id="mosaic">
+    <div class="mosaic-item span2" id="mosaic-0" style="min-height:320px">
+      <div class="photo-placeholder"><span>foto 04</span><small>horizontal</small></div>
+      <div class="mosaic-caption">Maria Eduarda Moreeuw</div>
+    </div>
+    <div class="mosaic-item" id="mosaic-1" style="min-height:320px">
+      <div class="photo-placeholder"><span>foto 05</span><small>vertical</small></div>
+    </div>
+    <div class="mosaic-item" id="mosaic-2" style="min-height:260px">
+      <div class="photo-placeholder"><span>foto 06</span><small>quadrado</small></div>
+    </div>
+    <div class="mosaic-item span2" id="mosaic-3" style="min-height:260px">
+      <div class="photo-placeholder"><span>+fotos</span><small>extras</small></div>
+      <div class="mosaic-caption">Hello Kitty &amp; todas as coisas bonitas da vida.</div>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="tl-strip">
+    <div class="tl-header">
+      <div class="ed-label">A história de perceber</div>
+      <h2 class="ed-title" style="color:var(--ivory)">Como ela foi virando <em>insubstituível.</em></h2>
+    </div>
+    <div class="tl-rows">
+      <div class="tl-row">
+        <div class="tl-year">I</div>
+        <div class="tl-sep"></div>
+        <div class="tl-content">
+          <div class="tl-phase">O começo</div>
+          <div class="tl-ctitle">Quando começamos a conversar</div>
+          <p class="tl-ctext">Era simples no início. Uma conversa aqui, outra ali. O tipo de coisa que a gente não percebe que está se tornando importante <strong>enquanto ainda está acontecendo.</strong></p>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-year">II</div>
+        <div class="tl-sep"></div>
+        <div class="tl-content">
+          <div class="tl-phase">A percepção</div>
+          <div class="tl-ctitle">Quando percebi que ela era diferente</div>
+          <p class="tl-ctext">Não foi um único instante. Foi a forma como ela fala, como ela pensa, como ela se importa com um jeito que <strong>a maioria das pessoas já esqueceu de fazer.</strong></p>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-year">III</div>
+        <div class="tl-sep"></div>
+        <div class="tl-content">
+          <div class="tl-phase">A admiração</div>
+          <div class="tl-ctitle">Quando passei a admirar de verdade</div>
+          <p class="tl-ctext">Descobrir que ela já era socorrista com 16 anos foi o tipo de coisa que para tudo. <strong>Essa menina delicada escolheu estar presente na hora mais difícil das pessoas.</strong> Isso é caráter.</p>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-year">IV</div>
+        <div class="tl-sep"></div>
+        <div class="tl-content">
+          <div class="tl-phase">Os ciúmes</div>
+          <div class="tl-ctitle">Os ciúmes bobos de gostar demais</div>
+          <p class="tl-ctext">Aquele ciúmes que não tem muito nome. <strong>Que só existe porque ela ocupa um espaço grande demais sem pedir permissão.</strong> Ridículo. Completamente desnecessário. Real demais.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULL QUOTE 2 -->
+  <div class="full-quote" style="background:var(--ivory)">
+    <div class="full-quote-bg" style="color:rgba(139,74,92,0.04)">ME</div>
+    <p class="fq-text" style="font-size:clamp(22px,3.5vw,48px)">
+      "Tem um coração gigante <em>escondido atrás desse olhar marcante.</em><br>
+      Quem tem sorte de conhecer, percebe."
+    </p>
+    <div class="fq-attr">Maria Eduarda Moreeuw, 16 anos — socorrista &amp; futura enfermeira</div>
+  </div>
+
+  <!-- FINALE -->
+  <section id="finale">
+    <div class="finale-photo" id="finale-photo">
+      <div class="photo-placeholder" style="min-height:100%"><span>foto favorita</span><small>retrato final</small></div>
+    </div>
+    <div class="finale-content">
+      <div class="finale-pre">Para você, Minha Princesa</div>
+      <h2 class="finale-main">
+        Você virou uma das minhas pessoas favoritas no mundo.
+      </h2>
+      <p class="finale-typewriter" id="tw"></p>
+      <div class="finale-sig-row">
+        <div class="sig-line"></div>
+        <span class="finale-sig">Com carinho, Jonathan. <span class="finale-heart">♡</span></span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="ft-l">Madu.</span>
+    <span class="ft-r">Feito com carinho — Jonathan, 2025</span>
+  </footer>
+</div>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+/* ── CURSOR ── */
+const cur=document.getElementById('cur'),cr=document.getElementById('cur-r');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.cssText+=`;left:${mx}px;top:${my}px`});
+(function loop(){rx+=(mx-rx)*0.1;ry+=(my-ry)*0.1;cr.style.cssText+=`;left:${rx}px;top:${ry}px`;requestAnimationFrame(loop)})();
+
+/* ── PHOTO SLOTS SETUP ── */
+const SLOTS=6;
+const photos=new Array(SLOTS).fill(null);
+let activeSlot=null;
+const fileInput=document.getElementById('file-input');
+const grid=document.getElementById('slots-grid');
+
+for(let i=0;i<SLOTS;i++){
+  const slot=document.createElement('div');
+  slot.className='photo-slot';
+  slot.dataset.i=i;
+  slot.innerHTML=`
+    <div class="slot-num">0${i+1}</div>
+    <div class="slot-check">✓</div>
+    <div class="slot-icon">+</div>
+    <div class="slot-label">foto ${i+1}</div>`;
+  slot.addEventListener('click',()=>{activeSlot=i;fileInput.click()});
+  grid.appendChild(slot);
+}
+
+fileInput.addEventListener('change',e=>{
+  const file=e.target.files[0];
+  if(!file||activeSlot===null)return;
+  const url=URL.createObjectURL(file);
+  photos[activeSlot]=url;
+  const slot=grid.children[activeSlot];
+  slot.classList.add('has-photo');
+  let img=slot.querySelector('img');
+  if(!img){img=document.createElement('img');slot.appendChild(img)}
+  img.src=url;
+  document.getElementById('start-btn').disabled=false;
+  fileInput.value='';
+});
+
+document.getElementById('start-btn').disabled=false;
+
+function applyPhotos(){
+  const filled=photos.filter(Boolean);
+  /* hero */
+  setPhoto('hero-photo','hero-placeholder',photos[0]);
+  /* panel 1 */
+  setPanelPhoto('panel-1',photos[1]);
+  /* panel 2 */
+  setPanelPhoto('panel-2',photos[2]);
+  /* mosaic */
+  const mIds=['mosaic-0','mosaic-1','mosaic-2','mosaic-3'];
+  [photos[3],photos[4],photos[5],photos[0]].forEach((p,i)=>{
+    if(p)setPanelPhoto(mIds[i],p);
+  });
+  /* finale */
+  const fp=document.getElementById('finale-photo');
+  const last=photos.filter(Boolean).slice(-1)[0];
+  if(last){fp.innerHTML='';const img=new Image();img.src=last;img.style.cssText='width:100%;height:100%;object-fit:cover';fp.appendChild(img)}
+}
+
+function setPhoto(containerId,placeholderId,url){
+  if(!url)return;
+  const c=document.getElementById(containerId);
+  const ph=document.getElementById(placeholderId);
+  if(ph)ph.style.display='none';
+  let img=c.querySelector('img');
+  if(!img){img=document.createElement('img');c.appendChild(img)}
+  img.src=url;
+}
+function setPanelPhoto(id,url){
+  if(!url)return;
+  const p=document.getElementById(id);
+  if(!p)return;
+  const ph=p.querySelector('.photo-placeholder');
+  if(ph)ph.style.display='none';
+  let img=p.querySelector('img');
+  if(!img){img=document.createElement('img');p.insertBefore(img,p.firstChild)}
+  img.src=url;
+}
+
+function launchSite(){
+  applyPhotos();
+  const setup=document.getElementById('setup');
+  gsap.to(setup,{opacity:0,y:-40,duration:0.7,ease:'power2.in',onComplete:()=>{
+    setup.style.display='none';
+    const main=document.getElementById('main');
+    main.classList.add('active');
+    gsap.to(main,{opacity:1,duration:0.01});
+    initAnimations();
+  }});
+}
+
+document.getElementById('start-btn').addEventListener('click',launchSite);
+document.getElementById('skip-btn').addEventListener('click',launchSite);
+
+/* ── SITE ANIMATIONS ── */
+function initAnimations(){
+  const tl=gsap.timeline({defaults:{ease:'power3.out'}});
+  tl.to('.hero-eyebrow',{opacity:1,y:0,duration:0.9,delay:0.3})
+    .to('.hero-title',{opacity:1,y:0,duration:1},'-=0.5')
+    .to('.hero-desc',{opacity:1,y:0,duration:0.9},'-=0.6')
+    .to('.hero-tag-row',{opacity:1,duration:0.8},'-=0.4')
+    .to('.hero-scroll-hint',{opacity:1,duration:0.8},'-=0.3');
+
+  function sr(sel,opts={}){
+    gsap.utils.toArray(sel).forEach((el,i)=>{
+      gsap.to(el,{
+        opacity:1,y:0,x:0,scale:opts.scale?1:undefined,
+        duration:opts.d||0.85,
+        delay:(opts.st||0.1)*i+(opts.base||0),
+        ease:opts.e||'power3.out',
+        scrollTrigger:{trigger:el,start:'top 88%',toggleActions:'play none none none'}
+      });
+    });
+  }
+  sr('.ed-label');
+  sr('.ed-title',{st:0.05,d:1});
+  sr('.ed-body',{st:0.05,d:0.9});
+  sr('.ed-quote',{d:1.1});
+  sr('.fq-text',{d:1.2});
+  sr('.fq-attr',{d:0.8});
+  sr('.tc-num',{st:0.12,d:0.7});
+  sr('.tc-title',{st:0.12,d:0.8});
+  sr('.tc-body',{st:0.12,d:0.9});
+  sr('.tl-row',{st:0.14,d:0.9});
+  sr('.finale-pre',{d:0.8});
+  sr('.finale-main',{d:1.1});
+  sr('.finale-sig-row',{d:0.9,base:0.5});
+
+  /* Parallax photos */
+  gsap.utils.toArray('.photo-panel img').forEach(img=>{
+    gsap.to(img,{yPercent:-6,ease:'none',
+      scrollTrigger:{trigger:img.parentElement,start:'top bottom',end:'bottom top',scrub:1.5}
+    });
+  });
+
+  /* Typewriter finale */
+  const txt="Talvez você nunca tenha percebido… mas sem querer virou uma das coisas mais importantes que aconteceram por aqui. Obrigado por existir desse jeito.";
+  const el=document.getElementById('tw');
+  let typed=false;
+  ScrollTrigger.create({
+    trigger:'#finale',start:'top 65%',
+    onEnter:()=>{
+      if(typed)return;typed=true;
+      gsap.to(el,{opacity:1,duration:0.5,delay:0.6});
+      setTimeout(()=>{
+        el.innerHTML='<span class="tw-cursor"></span>';
+        let i=0;
+        function type(){
+          if(i<txt.length){
+            const bl=el.querySelector('.tw-cursor');
+            el.textContent=txt.slice(0,++i);
+            if(bl){el.appendChild(bl)}else{const b=document.createElement('span');b.className='tw-cursor';el.appendChild(b)}
+            setTimeout(type,48+Math.random()*30);
+          } else {
+            const bl=el.querySelector('.tw-cursor');
+            if(bl)setTimeout(()=>{bl.remove()},1200);
+          }
+        }type();
+      },900);
+    }
+  });
+}
+</script>
+</body>
+</html>
